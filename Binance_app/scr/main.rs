@@ -129,25 +129,26 @@ async fn run(ws_stream: WebSocketStream<TcpStream>) -> Result<(), Box<dyn std::e
 
     let current_prices = Arc::new(Mutex::new(vec![1.0; currencies.len()*5]));
 
-    // Here we start our listening streams. For some reason - our last thread dont start. So,
-    // We have extra thread here
+    // Here we start our listening streams. Our last thread start only in the end of this code
+    // So, it tells us about disconnection
     for mut i in 0..=currencies.len() {
 
         if i == currencies.len(){
-            i = 0;
+            tokio::task::spawn ( async move{
+            println!("we got disconnection");
+            });
+        } else {
+            let wss_url = format!("wss://stream.binance.com:9443/ws/{}@kline_{}", currencies[i], &time_interval);
+
+            let prices = Arc::clone(&current_prices);
+            let sign = Arc::clone(&break_sign);
+            tokio::task::spawn(async move {
+                println!("we are here {}", i);
+                if let Err(e) = connection_to_binance(&wss_url, i, prices, sign).await {
+                    println!("Error: {}", e);
+                }
+            });
         }
-        let wss_url = format!("wss://stream.binance.com:9443/ws/{}@kline_{}", currencies[i], &time_interval);
-
-        let prices = Arc::clone(&current_prices);
-        let sign = Arc::clone(&break_sign);
-        tokio::spawn ( async move{
-
-            if let Err(e) = connection_to_binance(&wss_url, i, prices, sign).await{
-                println!("Error: {}", e);
-            }
-        });
-
-
 
     }
 
@@ -199,7 +200,7 @@ async fn run(ws_stream: WebSocketStream<TcpStream>) -> Result<(), Box<dyn std::e
 
 
     }
-    println!("we got disconnection");
+
     Ok(())
 }
 
@@ -326,7 +327,7 @@ fn task_making (signs: Arc<Mutex<Vec<char>>>, first_is_negative: Arc<Mutex<bool>
 // This fn give us incomming streams from binance
 async fn connection_to_binance (url: &str, number: usize, prices: Arc<Mutex<Vec<f64>>>, break_sign: Arc<Mutex<bool>>)
     -> Result<(), Box<dyn std::error::Error>>{
-
+    println!("we are there {}", number);
     let mut message: out_message;
     // We connect to stream and split it. We are interested in read part
     let (stream, _) = connect_async(url).await?;
