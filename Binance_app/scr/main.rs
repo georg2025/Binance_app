@@ -143,7 +143,7 @@ async fn run(ws_stream: WebSocketStream<TcpStream>) -> Result<(), Box<dyn std::e
             let prices = Arc::clone(&current_prices);
             let sign = Arc::clone(&break_sign);
             tokio::task::spawn(async move {
-                println!("we are here {}", i);
+
                 if let Err(e) = connection_to_binance(&wss_url, i, prices, sign).await {
                     println!("Error: {}", e);
                 }
@@ -327,7 +327,7 @@ fn task_making (signs: Arc<Mutex<Vec<char>>>, first_is_negative: Arc<Mutex<bool>
 // This fn give us incomming streams from binance
 async fn connection_to_binance (url: &str, number: usize, prices: Arc<Mutex<Vec<f64>>>, break_sign: Arc<Mutex<bool>>)
     -> Result<(), Box<dyn std::error::Error>>{
-    println!("we are there {}", number);
+
     let mut message: out_message;
     // We connect to stream and split it. We are interested in read part
     let (stream, _) = connect_async(url).await?;
