@@ -211,44 +211,50 @@ fn message_produce (prices: Arc<Mutex<Vec<f64>>>, signs: Arc<Mutex<Vec<char>>>,
     let mut same_time = true;
     let (mut t, mut o, mut c, mut h, mut l) = (0, 0.0, 0.0, 0.0, 0.0);
 
-    // This are prices of our coins
-    let prices1 = prices.lock().unwrap();
+    let mut prices2 = vec!();
+    {
+        // This are prices of our coins
+        let prices1 = prices.lock().unwrap();
+        prices2 = prices1.clone();
+    }
     // If the first char is '-' - this one will be true
-    let first_negative = first_is_negative.lock().unwrap();
-    if *first_negative{
-        (t, o, c, h, l) = (prices1[0] as u64, -prices1[1], -prices1[2], -prices1[3], -prices1[4]);
-    } else {
-        (t, o, c, h, l) = (prices1[0] as u64, prices1[1], prices1[2], prices1[3], prices1[4]);
+    {
+        let first_negative = first_is_negative.lock().unwrap();
+        if *first_negative {
+            (t, o, c, h, l) = (prices2[0] as u64, -prices2[1], -prices2[2], -prices2[3], -prices2[4]);
+        } else {
+            (t, o, c, h, l) = (prices2[0] as u64, prices2[1], prices2[2], prices2[3], prices2[4]);
+        }
     }
 
 
     // This are signes we use
     let signes = signs.lock().unwrap();
-    let number = prices1.len()/5;
+    let number = prices2.len()/5;
     for i in 1..number {
-        if prices1[i*5+0] as u64 != t {
+        if prices2[i*5+0] as u64 != t {
             same_time = false
         }
         if signes[i-1] == '+' {
-            o+=prices1[i*5+1];
-            c+=prices1[i*5+2];
-            h+=prices1[i*5+3];
-            l+=prices1[i*5+4];
+            o+=prices2[i*5+1];
+            c+=prices2[i*5+2];
+            h+=prices2[i*5+3];
+            l+=prices2[i*5+4];
         } else if signes[i-1] == '-' {
-            o-=prices1[i*5+1];
-            c-=prices1[i*5+2];
-            h-=prices1[i*5+3];
-            l-=prices1[i*5+4];
+            o-=prices2[i*5+1];
+            c-=prices2[i*5+2];
+            h-=prices2[i*5+3];
+            l-=prices2[i*5+4];
         } else if signes[i-1] == '*' {
-            o *= prices1[i * 5 + 1];
-            c *= prices1[i * 5 + 2];
-            h *= prices1[i * 5 + 3];
-            l *= prices1[i * 5 + 4];
+            o *= prices2[i * 5 + 1];
+            c *= prices2[i * 5 + 2];
+            h *= prices2[i * 5 + 3];
+            l *= prices2[i * 5 + 4];
         } else if signes[i-1] == '/' {
-            o /= prices1[i * 5 + 1];
-            c /= prices1[i * 5 + 2];
-            h /= prices1[i * 5 + 3];
-            l /= prices1[i * 5 + 4];
+            o /= prices2[i * 5 + 1];
+            c /= prices2[i * 5 + 2];
+            h /= prices2[i * 5 + 3];
+            l /= prices2[i * 5 + 4];
         }
     }
 
